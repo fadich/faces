@@ -1,0 +1,446 @@
+<style lang="css">
+
+    ::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: rgba(0,0,0,0.55);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(0,0,0,0.65);
+    }
+
+    body {
+        margin: 0;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        background-size: cover;
+        background-position: top;
+        background-image: url(https://wiseai.tech/wp-content/uploads/2019/11/poly-bg-1.jpg);
+        font-family: Lucida Console, Courier, monospace;
+        letter-spacing: 0.02em;
+        font-weight: 400;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    #page {
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+
+        font-size: 2rem;
+        color: rgb(205, 215, 225);
+
+        overflow: overlay;
+    }
+
+    #wrapper {
+        margin: 5vh 5vw;
+        padding: 5vh 15vw;
+        min-height: 80vh;
+
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(10px);
+
+        box-shadow: 0 0 80px rgb(55, 85, 105);
+
+        border-radius: 0.25rem;
+    }
+
+    .box {
+        padding: 20px;
+    }
+
+    #drop_zone {
+        width: 35rem;
+        height: 20rem;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 3px dotted rgb(127, 150, 185);
+        border-radius: 0.25rem;
+
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    input[type="file"] {
+        display: none;
+    }
+
+    .image-box {
+        font-size: 1.15rem;
+        display: flex;
+    }
+
+    .image-box > .img-wrap {
+        display: inline-block;
+        padding: 0 15px 0 0;
+    }
+
+    .image-box > .img-wrap > a > img {
+        width: 12rem;
+        height: 7rem;
+        object-fit: cover;
+
+        background: rgba(205, 215, 225, 0.15);
+    }
+
+    .image-box > .img-wrap > .status {
+        width: 18rem;
+        height: 2.5rem;
+        overflow: hidden;
+        margin: 8px 0 0 0;
+    }
+
+    .image-box > .img-wrap > .result {
+        width: 18rem;
+        height: 2.5rem;
+        overflow: hidden;
+    }
+
+    .image-box > .img-wrap > .info {
+        width: 18rem;
+        height: 2.5rem;
+        overflow: hidden;
+    }
+
+    .image-box > .img-wrap > div > .label {
+        font-weight: bold;
+        margin: 0 5px 0 0;
+    }
+
+    .image-box > .img-wrap > div > .value {
+        font-style: italic;
+        word-wrap: break-word;
+        white-space: nowrap;
+    }
+
+    .image-box > .img-wrap > .close-btn {
+        margin: 0 0 0 20px;
+        cursor: pointer;
+    }
+
+    .image-box > .img-wrap > .close-btn:after {
+        content: " X ";
+        font-size: 2rem;
+    }
+
+    .text-regular {
+        color: rgb(205, 215, 225);
+    }
+
+    .text-success {
+        color: rgb(105, 215, 115);
+    }
+
+    .text-warning {
+        color: rgb(255, 195, 0);
+    }
+
+    .text-error {
+        color: rgb(225, 25, 25);
+    }
+
+    .invisible {
+        opacity: 0;
+    }
+</style>
+
+<div id="page">
+  <div id="wrapper">
+    <div id="content">
+      <div class="box">
+        <form action="/" enctype="multipart/form-data" method="POST">
+          <label
+              id="drop_zone"
+              for="files"
+              ondrop="dropHandler(event);"
+              ondragover="dragOverHandler(event);">
+            Upload one or more files
+            <input type="file" id="files" name="files" multiple onchange="onChangeInput(event);">
+          </label>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script lang="javascript">
+    function dropHandler(e) {
+        e.preventDefault()
+
+        if (e.dataTransfer.items) {
+            // Use DataTransferItemList interface to access the file(s)
+            [...e.dataTransfer.items].forEach((item) => {
+                // If dropped items aren't files, reject them
+                if (item.kind === "file") {
+                    const file = item.getAsFile()
+
+                    submitFile(file)
+                }
+            })
+        } else {
+            // Use DataTransfer interface to access the file(s)
+            [...e.dataTransfer.files].forEach((file) => {
+                submitFile(file)
+            })
+        }
+    }
+
+    function dragOverHandler(e) {
+        e.preventDefault()
+    }
+
+    function onChangeInput(e) {
+        e.preventDefault()
+
+        const filesFiled = document.getElementById("files")
+
+        for (let file of filesFiled.files) {
+            submitFile(file)
+        }
+
+        filesFiled.value = ""
+    }
+
+    function submitFile(file) {
+        const imgId = Date.now()
+        const reader = new FileReader()
+        const xhr = new XMLHttpRequest()
+        const formData = new FormData()
+
+        xhr.open("POST", "http://192.168.50.43:5000/")
+
+        const content = document.getElementById("content")
+
+        const fileBox = document.createElement("div")
+
+        const fileImgWrap = document.createElement("div")
+        const fileImgLink = document.createElement("a")
+        const fileImg = document.createElement("img")
+
+        const fileStateWrap = document.createElement("div")
+
+        const fileStatusWrap = document.createElement("div")
+        const fileStatusLabel = document.createElement("span")
+        const fileStatusValue = document.createElement("span")
+
+        const fileResultWrap = document.createElement("div")
+        const fileResultLabel = document.createElement("span")
+        const fileResultValue = document.createElement("span")
+
+        const fileInfoWrap = document.createElement("div")
+        const fileInfoLabel = document.createElement("span")
+        const fileInfoValue = document.createElement("span")
+
+        const fileCloseBtnWrap = document.createElement("div")
+        const fileCloseBtn = document.createElement("span")
+
+        fileBox.id = "img-box-" + imgId
+        fileBox.classList.add("box")
+        fileBox.classList.add("image-box")
+
+        fileImgWrap.classList.add("img-wrap")
+
+        fileStateWrap.classList.add("img-wrap")
+
+        fileStatusWrap.classList.add("status")
+        fileStatusLabel.innerText = "Status:"
+        fileStatusValue.innerText = "Uploading"
+        fileStatusLabel.classList.add("label")
+        fileStatusValue.classList.add("value")
+
+        fileResultWrap.classList.add("result")
+        fileResultLabel.innerHTML = "Result:"
+        fileResultLabel.classList.add("label")
+        fileResultLabel.classList.add("invisible")
+        fileResultValue.classList.add("value")
+
+        fileInfoWrap.classList.add("info")
+        fileInfoLabel.innerHTML = "Info:"
+        fileInfoLabel.classList.add("label")
+        fileInfoValue.classList.add("value")
+
+        fileCloseBtnWrap.classList.add("img-wrap")
+        fileCloseBtn.classList.add("close-btn")
+        fileCloseBtn.onclick = (e) => {
+            if (
+                fileStatusValue.classList.contains("text-error") ||
+                confirm("Remove image '" + file.name + "'")
+            ) {
+                xhr.abort()
+
+                fileBox.animate([
+                    { transform: "translate(0, 0) scale(1)", height: "8rem" },
+                    { transform: "translate(40%, -50%) scale(0)", height: "0" },
+                ], {
+                    duration: 250,
+                    iterations: 1,
+                })
+                Promise.all(fileBox.getAnimations().map((animation) => animation.finished)).then(
+                    () => fileBox.remove()
+                )
+            }
+        }
+
+        formData.append("file", file);
+        formData.append("image_id", "" + imgId);
+
+        const fileUrl = URL.createObjectURL(file)
+        fileImg.src = fileUrl
+        fileImgLink.href = fileUrl
+        fileImgLink.setAttribute("target", "_blank")
+
+        fileImgLink.append(fileImg)
+        fileImgWrap.append(fileImgLink)
+
+        fileStatusWrap.append(fileStatusLabel)
+        fileStatusWrap.append(fileStatusValue)
+        fileStateWrap.append(fileStatusWrap)
+
+        fileResultWrap.append(fileResultLabel)
+        fileResultWrap.append(fileResultValue)
+        fileStateWrap.append(fileResultWrap)
+
+        fileInfoWrap.append(fileInfoLabel)
+        fileInfoWrap.append(fileInfoValue)
+        fileStateWrap.append(fileInfoWrap)
+
+        fileCloseBtnWrap.append(fileCloseBtn)
+
+        fileBox.append(fileImgWrap)
+        fileBox.append(fileStateWrap)
+        fileBox.append(fileCloseBtnWrap)
+
+        content.appendChild(fileBox)
+
+        reader.readAsBinaryString(file)
+
+        xhr.onload = () => {
+            if (xhr.status < 300) {
+              fileStatusValue.classList.add("text-regular")
+            } else if (xhr.status < 400) {
+              fileStatusValue.classList.add("text-warning")
+            } else {
+              fileStatusValue.classList.add("text-error")
+            }
+
+            let statusMsg;
+            if (xhr.responseText.length > 17) {
+                statusMsg = xhr.responseText.slice(0, 14) + "..."
+
+                fileStatusValue.ariaPlaceholder = xhr.responseText
+            } else {
+                statusMsg = xhr.responseText
+            }
+
+            fileStatusValue.innerText = statusMsg
+
+            const facesResultUrl = xhr.getResponseHeader("X-FACES-RESULT-URL")
+            if (facesResultUrl) {
+                showResult(imgId, facesResultUrl)
+            }
+
+            const info = xhr.getResponseHeader("X-FACES-INFO")
+            if (info) {
+                fileInfoLabel.classList.remove("invisible")
+                fileInfoValue.innerText = info
+            }
+        }
+
+        xhr.upload.addEventListener("progress", (e) => {
+            if (e.lengthComputable) {
+                const percentage = Math.round((e.loaded * 100) / e.total);
+
+                fileInfoValue.innerText = percentage + "%"
+            }
+        }, false)
+
+        xhr.upload.addEventListener("load", (e) => {
+            fileStatusValue.innerText = "storing"
+
+            fileInfoLabel.classList.add("invisible")
+            fileInfoValue.innerText = ""
+        }, false)
+
+        xhr.send(formData)
+    }
+
+    function showResult(imgId, url) {
+        const imgBox = document.getElementById("img-box-" + imgId)
+        const fileStateWrap = imgBox.getElementsByClassName("result")[0]
+        const fileResultLabel = fileStateWrap.getElementsByClassName("label")[0]
+        const fileResultValue = fileStateWrap.getElementsByClassName("value")[0]
+
+        fileResultLabel.classList.remove("invisible")
+        fileResultValue.innerHTML = `<a href="${url}" target="_blank" class="text-regular">result >></a>`
+    }
+
+    (() => {
+        const ws = new WebSocket("ws://192.168.50.43:5001/")
+
+        ws.onmessage = (event) => {
+            const msg = JSON.parse(event.data)
+
+            const fileBox = document.getElementById("img-box-" + msg.image_id)
+
+            const fileStatusWrap = fileBox.getElementsByClassName("status")[0]
+            const fileStatusValue = fileStatusWrap.getElementsByClassName("value")[0]
+
+            const fileInfoWrap = fileBox.getElementsByClassName("info")[0]
+            const fileInfoLabel = fileInfoWrap.getElementsByClassName("label")[0]
+            const fileInfoValue = fileInfoWrap.getElementsByClassName("value")[0]
+
+            if (msg.status) {
+                fileStatusValue.innerText = msg.status
+            }
+
+            if (msg.status_code === 200) {
+                fileStatusValue.classList.remove("text-regular")
+                fileStatusValue.classList.remove("text-warning")
+                fileStatusValue.classList.remove("text-error")
+
+                fileStatusValue.classList.add("text-success")
+            } else if (msg.status_code < 300) {
+                fileStatusValue.classList.remove("text-success")
+                fileStatusValue.classList.remove("text-warning")
+                fileStatusValue.classList.remove("text-error")
+
+                fileStatusValue.classList.add("text-regular")
+            } else if (msg.status_code < 400) {
+                fileStatusValue.classList.remove("text-regular")
+                fileStatusValue.classList.remove("text-success")
+                fileStatusValue.classList.remove("text-error")
+
+                fileStatusValue.classList.add("text-warning")
+            } else {
+                fileStatusValue.classList.remove("text-regular")
+                fileStatusValue.classList.remove("text-success")
+                fileStatusValue.classList.remove("text-warning")
+
+                fileStatusValue.classList.add("text-error")
+            }
+
+            if (msg.result) {
+                showResult(msg.image_id, msg.result)
+            }
+
+            if (msg.info) {
+                fileInfoLabel.classList.remove("invisible")
+                fileInfoValue.innerText = msg.info
+            }
+        }
+    })()
+</script>

@@ -1,0 +1,31 @@
+<style lang="css">
+    img {
+        width: 21rem;
+        height: 21rem;
+        object-fit: cover;
+
+        background: rgba(205, 215, 225, 0.15);
+    }
+
+    .wrapper {
+        display: flex;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .wrapper > * {
+        margin: 2rem;
+    }
+</style>
+
+<div class="wrapper">
+  {% for file in files %}
+    <div>
+      <a href="{{ (request.path + '/' if request.path != '/' else '') + file }}">
+        <img src="{{ (request.path + '/' if request.path != '/' else '') + file }}" alt="{{ file }}">
+      </a>
+    </div>
+  {% endfor %}
+</div>
